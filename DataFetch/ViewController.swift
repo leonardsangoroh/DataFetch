@@ -18,12 +18,25 @@ class ViewController: UITableViewController {
         ///Download data from the Whitehouse petitions server
         ///Convert it to Swift Data object
         ///Convert it to an array of petition instances
-        let urlString = "https://www.hackingwithswift.com/samples/petitions-1.json"
+        let urlString: String
+        
+        if navigationController?.tabBarItem.tag == 0 {
+            urlString = "https://www.hackingwithswift.com/samples/petitions-1.json"
+        }
+        else {
+            urlString = "https://www.hackingwithswift.com/samples/petitions-2.json"
+        }
         
         if let url = URL(string: urlString) {
             if let data = try? Data(contentsOf: url) {
                 parse(json: data)
             }
+            else {
+                showError()
+            }
+        }
+        else {
+            showError()
         }
     }
     
@@ -56,6 +69,12 @@ class ViewController: UITableViewController {
         let vc = DetailViewController()
         vc.detailItem = petitions[indexPath.row]
         navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    func showError(){
+        let ac = UIAlertController(title: "Loading Error", message: "There was a problem loading the feed; please check on your connection and try again", preferredStyle: .alert)
+        ac.addAction(UIAlertAction(title: "OK", style: .default))
+        present(ac, animated: true)
     }
 
 
