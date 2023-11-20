@@ -10,10 +10,13 @@ import UIKit
 class ViewController: UITableViewController {
     ///Array of Petition object
     var petitions = [Petition]()
+    var filteredPetitions = [Petition]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
+        
+        title = "We The People"
         
         ///Download data from the Whitehouse petitions server
         ///Convert it to Swift Data object
@@ -30,6 +33,7 @@ class ViewController: UITableViewController {
         if let url = URL(string: urlString) {
             if let data = try? Data(contentsOf: url) {
                 parse(json: data)
+                filteredPetitions = petitions
             }
             else {
                 showError()
@@ -40,18 +44,19 @@ class ViewController: UITableViewController {
         }
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "info.circle"), style: .plain, target: self, action: #selector(viewCredits))
+        navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "magnifyingglass"), style: .plain, target: self, action: #selector(searchWord))
         
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return petitions.count
+        return filteredPetitions.count
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
 //        cell.textLabel?.text = "petition.title"
 //        cell.detailTextLabel?.text = "petition.body"
-        let petition = petitions[indexPath.row]
+        let petition = filteredPetitions[indexPath.row]
         cell.textLabel?.text = petition.title
         cell.detailTextLabel?.text = petition.body
         return cell
@@ -87,7 +92,32 @@ class ViewController: UITableViewController {
         ac.addAction(okayAction)
         present(ac, animated: true)
     }
-
-
+    
+    @objc func searchWord() {
+        let ac = UIAlertController(title: "Search Keyword", message: nil, preferredStyle: .alert)
+        ac.addTextField()
+        
+        let submitSearchWord = UIAlertAction(title: "Search", style: .default) { [weak self, weak ac] _ in
+            guard let item = ac?.textFields?[0].text else {return}
+            
+            self?.submit(item)
+            
+        }
+        
+        ac.addAction(submitSearchWord)
+        present(ac, animated: true)
+    }
+    
+    func submit (_ item:String) {
+        filteredPetitions.removeAll(keepingCapacity: true)
+        
+        for petition in petitions {
+            if petition.title.contains(item) {
+                filteredPetitions.append(petition)
+                tableView.reloadData()
+            }
+        }
+    }
+    
 }
 
