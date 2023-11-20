@@ -38,6 +38,9 @@ class ViewController: UITableViewController {
         else {
             showError()
         }
+        
+        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "info.circle"), style: .plain, target: self, action: #selector(viewCredits))
+        
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -74,6 +77,14 @@ class ViewController: UITableViewController {
     func showError(){
         let ac = UIAlertController(title: "Loading Error", message: "There was a problem loading the feed; please check on your connection and try again", preferredStyle: .alert)
         ac.addAction(UIAlertAction(title: "OK", style: .default))
+        present(ac, animated: true)
+    }
+    
+    @objc func viewCredits() {
+        let ac = UIAlertController(title: "Source", message: "The data displayed is sourced from the 'We the People' API of the Whitehouse ", preferredStyle: .alert)
+        let okayAction = UIAlertAction(title: "OK", style: .default)
+        
+        ac.addAction(okayAction)
         present(ac, animated: true)
     }
 
