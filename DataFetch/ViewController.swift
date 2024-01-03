@@ -18,6 +18,14 @@ class ViewController: UITableViewController {
         
         title = "We The People"
         
+        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "info.circle"), style: .plain, target: self, action: #selector(viewCredits))
+        navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "magnifyingglass"), style: .plain, target: self, action: #selector(searchWord))
+        
+        performSelector(inBackground: #selector(fetchJSON), with: nil)
+        
+    }
+    
+    @objc func fetchJSON() {
         ///Download data from the Whitehouse petitions server
         ///Convert it to Swift Data object
         ///Convert it to an array of petition instances
@@ -44,27 +52,21 @@ class ViewController: UITableViewController {
         
         //make all loading code run in the background queue
         //DispatchQueue.global().async { }
-        DispatchQueue.global(qos: .userInteractive).async {
-            [weak self] in
-            if let url = URL(string: urlString) {
+        if let url = URL(string: urlString) {
                 /// Data's contentsOf method was used to download data from the internet
                 /// It is a blocking call; meaning it blocks execution of any further code in the method until it has connected to the server and fully downlaoded all the data
 
-                if let data = try? Data(contentsOf: url) {
-                    self?.parse(json: data)
-                    self?.filteredPetitions = self!.petitions
-                }
-                else {
-                    self!.showError()
-                }
+            if let data = try? Data(contentsOf: url) {
+                parse(json: data)
+                filteredPetitions = petitions
             }
             else {
-                self?.showError()
+                showError()
             }
         }
-        
-        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "info.circle"), style: .plain, target: self, action: #selector(viewCredits))
-        navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "magnifyingglass"), style: .plain, target: self, action: #selector(searchWord))
+        else {
+            performSelector(onMainThread: #selector(showError), with: nil, waitUntilDone: false)
+        }
         
     }
     
@@ -89,11 +91,11 @@ class ViewController: UITableViewController {
         ///decode() method to convert JSON data into Petitions object
         if let jsonPetitions = try? decoder.decode(Petitions.self, from: json) {
             petitions = jsonPetitions.results
-            
-            DispatchQueue.main.async { [weak self] in
-                self?.tableView.reloadData()
-            }
+            tableView.performSelector(onMainThread: #selector(UITableView.reloadData), with: nil, waitUntilDone: false)
 
+        }
+        else {
+            performSelector(onMainThread: #selector(showError), with: nil, waitUntilDone: false)
         }
     }
     
@@ -103,13 +105,11 @@ class ViewController: UITableViewController {
         navigationController?.pushViewController(vc, animated: true)
     }
     
-    func showError(){
-        DispatchQueue.main.async { [weak self] in
+    @objc func showError(){
             
             let ac = UIAlertController(title: "Loading Error", message: "There was a problem loading the feed; please check on your connection and try again", preferredStyle: .alert)
             ac.addAction(UIAlertAction(title: "OK", style: .default))
-            self?.present(ac, animated: true)
-        }
+            present(ac, animated: true)
 
     }
     
