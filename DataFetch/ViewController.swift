@@ -29,18 +29,38 @@ class ViewController: UITableViewController {
         else {
             urlString = "https://www.hackingwithswift.com/samples/petitions-2.json"
         }
+        ///GRAND CENTRAL DISPATCH
+        /// THREADS
+        ///All UI work must occur on the main thread
+        ///When accessing any remote resource, slow code, or parallel running code, you should do so on a background thread, not the main one
+        ///GCD automatically creates threads for the program and executes code on them in the most efficient way it can
+        ///
+        ///THREADS QoS queues
+        ///1. User Interactive
+        ///2. User Initiated
+        ///-> Default queue
+        ///3. Utility
+        ///4. Background
         
-        if let url = URL(string: urlString) {
-            if let data = try? Data(contentsOf: url) {
-                parse(json: data)
-                filteredPetitions = petitions
+        //make all loading code run in the background queue
+        //DispatchQueue.global().async { }
+        DispatchQueue.global(qos: .userInteractive).async {
+            [weak self] in
+            if let url = URL(string: urlString) {
+                /// Data's contentsOf method was used to download data from the internet
+                /// It is a blocking call; meaning it blocks execution of any further code in the method until it has connected to the server and fully downlaoded all the data
+
+                if let data = try? Data(contentsOf: url) {
+                    self?.parse(json: data)
+                    self?.filteredPetitions = self!.petitions
+                }
+                else {
+                    self!.showError()
+                }
             }
             else {
-                showError()
+                self?.showError()
             }
-        }
-        else {
-            showError()
         }
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "info.circle"), style: .plain, target: self, action: #selector(viewCredits))
@@ -69,7 +89,11 @@ class ViewController: UITableViewController {
         ///decode() method to convert JSON data into Petitions object
         if let jsonPetitions = try? decoder.decode(Petitions.self, from: json) {
             petitions = jsonPetitions.results
-            tableView.reloadData()
+            
+            DispatchQueue.main.async { [weak self] in
+                self?.tableView.reloadData()
+            }
+
         }
     }
     
@@ -80,9 +104,13 @@ class ViewController: UITableViewController {
     }
     
     func showError(){
-        let ac = UIAlertController(title: "Loading Error", message: "There was a problem loading the feed; please check on your connection and try again", preferredStyle: .alert)
-        ac.addAction(UIAlertAction(title: "OK", style: .default))
-        present(ac, animated: true)
+        DispatchQueue.main.async { [weak self] in
+            
+            let ac = UIAlertController(title: "Loading Error", message: "There was a problem loading the feed; please check on your connection and try again", preferredStyle: .alert)
+            ac.addAction(UIAlertAction(title: "OK", style: .default))
+            self?.present(ac, animated: true)
+        }
+
     }
     
     @objc func viewCredits() {
